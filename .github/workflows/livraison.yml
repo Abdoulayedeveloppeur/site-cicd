@@ -70,3 +70,43 @@ jobs:
             name: site-web
             path: _site/
 
+name: Livraison continue
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Verifier la page d'accueil
+        run: test -f index.html
+
+      - name: Verifier le titre de la page
+        run: grep -q '<h1>' index.html
+
+  construire:
+    needs: verifier
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Preparer le site
+        run: |
+          mkdir -p _site
+          cp *.html _site/
+          echo "Version ${{ github.sha }} construite le $(date)" > _site/version.txt
+          ls -l _site
+
+      - name: Livrer l'artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-construit
+          path: _site/
